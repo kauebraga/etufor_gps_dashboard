@@ -43,7 +43,7 @@ page_sidebar(
     
     
     numericInput(inputId = "velocidade_maxima", 
-                 label = "Selecione uma velocidade maxima", 
+                 label = "Selecione uma velocidade maxima (km/h)", 
                  value = 40,
                  max = 60,
                  min = 0

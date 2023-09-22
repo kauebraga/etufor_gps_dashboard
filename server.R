@@ -83,6 +83,8 @@ server <- function(input, output) {
       
       segments_data <- segments_variables[velocidade <= input$velocidade_maxima & interval %in% intervalo]
       
+      stops <- stops_unique
+      
       
     } else if (is.null(input$interval)) {
       
