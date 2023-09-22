@@ -4,22 +4,39 @@ intervals_list <- readRDS("data/intervals.rds")
 
 
 page_sidebar(
-  title = "Penguins dashboard",
+  title = "Monitoramento de velocidade ETUFOR",
   sidebar = sidebar(
     title = "Filtros",
+    width = 325, 
+    # bg = "#e3e4e6",
     
     # selecionar intervalo temporal
-    selectInput(inputId = "interval",
-                label = "Selecione o(s) intervalos(s)",
-                choices = c("Todos",intervals_list),
-                multiple = TRUE
+    pickerInput(inputId = "interval",
+                label = "Intervalos(s)",
+                choices = c(intervals_list),
+                multiple = TRUE,
+                options = pickerOptions(selectAllText = "Selecionar todos",
+                                        deselectAllText = "Zerar selecao",
+                                        size = 10,
+                                        actionsBox = TRUE,
+                                        noneSelectedText = "Filtre para intervalo(s)",
+                                        style = "background: white"
+                )
     ),
     
     # selecionar rota
-    selectInput(inputId = "route",
-                label = "Selecione uma linha",
-                choices = c("Todas", unique(routes_shapes_list$route_id)),
-                multiple = TRUE
+    pickerInput(inputId = "route",
+                label = "Linha(s)",
+                choices = c(unique(routes_shapes_list$route_id)),
+                multiple = TRUE,
+                options = pickerOptions(selectAllText = "Selecionar todas",
+                                        deselectAllText = "Zerar selecao",
+                                        size = 10,
+                                        actionsBox = TRUE,
+                                        liveSearch = TRUE,
+                                        noneSelectedText = "Filtre para linha(s)",
+                                        style = "background: white"
+                )
                 
                 
     ),
@@ -37,7 +54,7 @@ page_sidebar(
     downloadBttn(outputId = "download",
                  label = "Download",
                  style = "simple"
-                 )
+    )
     
   ),
   card(

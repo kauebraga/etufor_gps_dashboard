@@ -16,7 +16,9 @@ readr::write_rds(intervals, "data/intervals.rds")
 # stops ---------------------------------------------------------------------------------------
 stops <- readRDS("data/stops_gtfs_routes.rds")
 stops <- sf::st_as_sf(stops, coords = c("stop_lon", "stop_lat"), crs = 4326)
+stops_unique <- distinct(stops, geometry)
 readr::write_rds(stops, "data/stops_gtfs_routes_sf.rds")
+readr::write_rds(stops_unique, "data/stops_gtfs_sf.rds")
 
 
 

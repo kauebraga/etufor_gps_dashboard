@@ -5,13 +5,15 @@ segments_sf <- setDT(readRDS("data/segments_gtfs_unique.rds"))
 segments_speeds <- setDT(readRDS("data/gps_by_segment_unique.rds"))
 segments_variables <- setDT(readRDS("data/gps_by_segment_variables.rds"))
 stops_routes <- readRDS("data/stops_gtfs_routes_sf.rds")
+stops_unique <- readRDS("data/stops_gtfs_sf.rds")
 
 
 server <- function(input, output) {
   
   
   # set data
-  data <- reactiveValues(segments = NULL,
+  data <- reactiveValues(start = NULL,
+                         segments = NULL,
                          stops = NULL)
   
   output$map <- renderLeaflet({
@@ -21,7 +23,10 @@ server <- function(input, output) {
     segments_data <- merge(segments_speeds, segments_sf)
     segments_data <- sf::st_sf(segments_data, crs = 4326)
     
-    data$segments <- segments_data
+    data$start <- segments_data
+    
+    # data$segments <- segments_data
+    # data$stops <- stops_unique
     
     pal <- colorNumeric(
       palette = "RdYlBu",
@@ -41,8 +46,14 @@ server <- function(input, output) {
                    opacity = 0.8,
                    label = lapply(label_segment, htmltools::HTML)) %>%
       
+      addCircleMarkers(data = stops_unique,  
+                       stroke = FALSE, fillOpacity = 0.5,
+                       radius = 2,
+                       color = "black",
+                       group = "Paradas") %>%
+      
       addLayersControl(baseGroups = c("Light", "Dark", "Satellite"),
-                       # overlayGroups = c("Overlay"),
+                       overlayGroups = c("Paradas"),
                        options = layersControlOptions(collapsed = FALSE),
                        position = "bottomright") %>%
       addLegend("bottomright", pal = pal, values = ~velocidade,
@@ -65,20 +76,29 @@ server <- function(input, output) {
     
     if (is.null(input$route)) {
       
-      segments_data <- segments_variables[velocidade <= input$velocidade_maxima & interval %in% input$interval]
+      # print(segments_variables)
+      # print(input$interval)
+      
+      if (is.null(input$interval)) intervalo <- unique(segments_variables$interval) else intervalo <- input$interval
+      
+      segments_data <- segments_variables[velocidade <= input$velocidade_maxima & interval %in% intervalo]
+      
       
     } else if (is.null(input$interval)) {
       
       segments_data <- segments_variables[velocidade <= input$velocidade_maxima & route_id %in% input$route]
+      
       stops <- subset(stops_routes, route_id %in% input$route)
       
     } else if (is.null(input$route) & is.null(input$interval)) {
       
+      print("aqui2")
       segments_data <- segments_variables[velocidade <= input$velocidade_maxima]
       
     } else {
       
       
+      print("aqui3")
       segments_data <- segments_variables[velocidade <= input$velocidade_maxima & interval %in% input$interval & route_id %in% input$route]
       stops <- subset(stops_routes, route_id %in% input$route)
       
@@ -103,9 +123,14 @@ server <- function(input, output) {
     
     req(input$submit >= 1)
     
+    
+    print(data$segments)
+    
     pal <- colorNumeric(
       palette = "RdYlBu",
       domain = data$segments$velocidade)
+    
+    # print(data$segments)
     
     # label for clicking on the segment
     label_segment <- paste0("<b>Velocidade:</b>", round(data$segments$velocidade, 1), " km/h")
@@ -120,8 +145,15 @@ server <- function(input, output) {
                    label = lapply(label_segment, htmltools::HTML)) %>%
       addCircleMarkers(data = data$stops,  
                        stroke = FALSE, fillOpacity = 0.5,
-                       radius = 3,
-                       color = "black") %>%
+                       radius = 2,
+                       color = "black",
+                       group = "Paradas") %>%
+      
+      addLayersControl(baseGroups = c("Light", "Dark", "Satellite"),
+                       overlayGroups = c("Paradas"),
+                       options = layersControlOptions(collapsed = FALSE),
+                       position = "bottomright") %>%
+      
       addLegend("bottomright", pal = pal, values = ~velocidade,
                 title = "Velocidade"
       )
@@ -160,12 +192,22 @@ server <- function(input, output) {
     filename = function() {
       
       
-      sprintf("data_%s_%s.gpkg", "", "")
+      # sprintf("data_%s_%s.gpkg", "", "")
+      "data.gpkg"
       
     },
     content = function(file) {
       
+      
+      if (input$submit >= 0) {
+        
+        sf::st_write(data$start, file)
+        
+      } else {
+        
       sf::st_write(data$segments, file)
+        
+      }
       
     }
     
