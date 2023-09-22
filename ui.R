@@ -51,10 +51,25 @@ page_sidebar(
     actionButton(inputId = "submit",
                  label = "Filtrar"),
     hr(),
-    downloadBttn(outputId = "download",
-                 label = "Download",
-                 style = "simple"
+    downloadBttn(outputId = "download_png",
+                 label = "Download map (.png)",
+                 style = "simple",
+                 size = "sm"
+    ),
+    downloadBttn(outputId = "download_html",
+                 label = "Download map (.html)",
+                 style = "simple",
+                 size = "sm"
+    ),
+    downloadBttn(outputId = "download_data",
+                 label = "Download data (.gpkg)",
+                 style = "simple",
+                 size = "sm"
     )
+    # downloadBttn(outputId = "download_html",
+    #              label = "Download",
+    #              style = "simple"
+    # )
     
   ),
   card(

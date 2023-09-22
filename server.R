@@ -15,6 +15,8 @@ server <- function(input, output) {
   data <- reactiveValues(start = NULL,
                          segments = NULL,
                          stops = NULL)
+  map <- reactiveValues(start = NULL,
+                        map1 = NULL)
   
   output$map <- renderLeaflet({
     
@@ -36,7 +38,7 @@ server <- function(input, output) {
     label_segment <- paste0("<b>Velocidade:</b>", round(segments_data$velocidade, 1), " km/h")
     
     
-    map <- leaflet(data = segments_data, options = leafletOptions(zoomControl = FALSE)) %>%
+    m <- leaflet(data = segments_data, options = leafletOptions(zoomControl = FALSE)) %>%
       addProviderTiles(providers$CartoDB.DarkMatter, group = "Dark") %>%
       addProviderTiles(providers$CartoDB.Positron, group = "Light", layerId = "epa") %>%
       addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
@@ -59,8 +61,11 @@ server <- function(input, output) {
       addLegend("bottomright", pal = pal, values = ~velocidade,
                 title = "Velocidade"
       )
-      # setView(lng = 0, lat = 0, zoom = 2) 
     
+    
+    map$start <- m
+    
+    m
     
   })
   
@@ -126,8 +131,6 @@ server <- function(input, output) {
     req(input$submit >= 1)
     
     
-    print(data$segments)
-    
     pal <- colorNumeric(
       palette = "RdYlBu",
       domain = data$segments$velocidade)
@@ -137,7 +140,7 @@ server <- function(input, output) {
     # label for clicking on the segment
     label_segment <- paste0("<b>Velocidade:</b>", round(data$segments$velocidade, 1), " km/h")
     
-    map <- leafletProxy("map", data = data$segments) %>%
+    m <- leafletProxy("map", data = data$segments) %>%
       clearMarkers() %>%
       clearControls() %>%
       clearShapes() %>%
@@ -168,14 +171,14 @@ server <- function(input, output) {
       
       
       
-      map <- map %>%
+      m <- m %>%
         flyToBounds(bbox[[1]], bbox[[2]], bbox[[3]], bbox[[4]])
       
     }
     
+    map$map1 <- m
     
-    
-    map
+    m
     
   })
   
@@ -188,7 +191,92 @@ server <- function(input, output) {
 # download ------------------------------------------------------------------------------------
 
   # data
-  output$download <- downloadHandler(
+  output$download_png <- downloadHandler(
+    
+    
+    
+    # generate button with data
+    filename = function() {
+      
+      
+      # sprintf("data_%s_%s.gpkg", "", "")
+      "map.png"
+      
+    },
+    content = function(file) {
+      
+      if (input$submit == 0) {
+        
+        
+        # print(map$m)
+        
+        mapview::mapshot(map$start, file = file)
+        
+        
+        # sf::st_write(data$start, file)
+        
+      } else {
+        
+        print("foi")
+        
+        # sf::st_write(data$segments, file)
+        mapview::mapshot(map$map, file = file)
+        
+      }
+      
+    }
+    
+  )  
+  
+  
+  
+  # data
+  output$download_html <- downloadHandler(
+    
+    
+    
+    # generate button with data
+    filename = function() {
+      
+      
+      # sprintf("data_%s_%s.gpkg", "", "")
+      "map.html"
+      
+    },
+    content = function(file) {
+      
+      
+      if (input$submit == 0) {
+        
+        
+        # print(map$m)
+        
+        mapview::mapshot(map$start, file)
+        
+        
+        # sf::st_write(data$start, file)
+        
+      } else if (input$submit >= 1) {
+        
+        print("aqui")
+        
+      # sf::st_write(data$segments, file)
+        # mapview::mapshot(input[["map"]], file, cliprect = "viewport")
+        # htmlwidgets::saveWidget(input[["map"]], file)
+        htmlwidgets::saveWidget(input[["map"]], "temp.html", selfcontained = FALSE)
+        webshot::webshot("temp.html", file = file, cliprect = "viewport")
+        
+      }
+      
+    }
+    
+  )  
+  
+  
+  # data
+  output$download_data <- downloadHandler(
+    
+    
     
     # generate button with data
     filename = function() {
@@ -200,14 +288,14 @@ server <- function(input, output) {
     },
     content = function(file) {
       
-      
-      if (input$submit >= 0) {
+      if (input$submit == 0) {
+        
         
         sf::st_write(data$start, file)
         
       } else {
         
-      sf::st_write(data$segments, file)
+        sf::st_write(data$segments, file)
         
       }
       

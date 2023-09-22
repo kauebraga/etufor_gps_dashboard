@@ -5,6 +5,6 @@ library(data.table)
 library(sf)
 library(shinyWidgets)
 # shinyWidgets::shinyWidgetsGallery()
-
+# webshot::install_phantomjs()
 
 # options(shiny.fullstacktrace=TRUE)
