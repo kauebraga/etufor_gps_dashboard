@@ -1,5 +1,5 @@
 
-
+intervals_list <- readRDS("data/intervals.rds")
 # open data
 segments_sf <- setDT(readRDS("data/segments_gtfs_unique.rds"))
 segments_speeds <- setDT(readRDS("data/gps_by_segment_unique.rds"))
@@ -13,6 +13,7 @@ data_month <- readRDS("data/graphs/graphs_month.rds")
 
 data_interval_all <- readRDS("data/graphs/graphs_interval_all.rds")
 data_interval <- readRDS("data/graphs/graphs_interval.rds")
+data_interval_segments <- readRDS("data/graphs/graphs_interval_segments.rds")
 
 data_fluxo_all <- readRDS("data/graphs/graphs_fluxo_all.rds")
 
@@ -67,7 +68,9 @@ server <- function(input, output, session) {
       addPolylines(color = ~pal(velocidade),
                    weight = 2,
                    opacity = 0.8,
-                   label = lapply(label_segment, htmltools::HTML)) %>%
+                   layerId = ~segment_id,
+                   label = lapply(label_segment, htmltools::HTML),
+                   highlightOptions = highlightOptions(opacity = 1, weight = 4, color = "black")) %>%
       
       addCircleMarkers(data = stops_unique,  
                        stroke = FALSE, fillOpacity = 0.5,
@@ -80,8 +83,9 @@ server <- function(input, output, session) {
                        options = layersControlOptions(collapsed = FALSE),
                        position = "bottomright") %>%
       addLegend("bottomright", pal = pal, values = ~velocidade,
-                title = "Velocidade"
-      )
+                title = "Velocidade (km/h)"
+      ) %>%
+      hideGroup("Paradas")
     
     
     map$start <- m
@@ -96,41 +100,24 @@ server <- function(input, output, session) {
     
     req(input$submit >= 1)
     
-    # print(input$velocidade_maxima)
-    # print(input$route)
-    # print(input$interval)
     
-    if (is.null(input$route)) {
-      
-      # print(segments_variables)
-      # print(input$interval)
-      
-      if (is.null(input$interval)) intervalo <- unique(segments_variables$interval) else intervalo <- input$interval
-      
-      segments_data <- segments_variables[velocidade <= input$velocidade_maxima & interval %in% intervalo]
-      
-      stops <- stops_unique
-      
-      
-    } else if (is.null(input$interval)) {
-      
-      segments_data <- segments_variables[velocidade <= input$velocidade_maxima & route_id %in% input$route]
-      
-      stops <- subset(stops_routes, route_id %in% input$route)
-      
-    } else if (is.null(input$route) & is.null(input$interval)) {
-      
-      print("aqui2")
-      segments_data <- segments_variables[velocidade <= input$velocidade_maxima]
-      
-    } else {
-      
-      
-      print("aqui3")
-      segments_data <- segments_variables[velocidade <= input$velocidade_maxima & interval %in% input$interval & route_id %in% input$route]
-      stops <- subset(stops_routes, route_id %in% input$route)
-      
-    }
+    # intervalo <- unlist(strsplit(intervalo, "\\|"))
+    
+    # # NEW CODE STARTS Here
+    # # filter velocidade
+    segments_data <- segments_variables[velocidade <= input$velocidade_maxima]
+    # # filter interval
+    segments_data <- if (is.null(input$intervalo)) segments_data else segments_data[interval %in% unlist(strsplit(intervalo, "\\|"))]
+    # # filter route
+    segments_data <- if (is.null(input$route)) segments_data else segments_data[route_id %in% input$route]
+    # # filter direction
+    print(input$direction)
+    segments_data <- if (is.null(input$route)) segments_data else if (input$direction == "all") segments_data else segments_data[direction %in% input$direction]
+    print(segments_data)
+    
+    # filter stops
+    stops <- if (is.null(input$route)) stops_unique else if (input$direction == "all") subset(stops_routes, route_id %in% input$route) else subset(stops_routes, route_id %in% input$route & direction %in% input$direction)
+    # # NEW CODE finishds Here
     
     segments_data <- segments_data[, .(velocidade = median(velocidade)), by = segment_id]
     segments_data <- merge(segments_data, segments_sf)
@@ -141,8 +128,9 @@ server <- function(input, output, session) {
     # data$segments <- st_sf(data$segments, crs = 4326)
     
     
+    
   })
-
+  
   
   
   
@@ -168,7 +156,9 @@ server <- function(input, output, session) {
       addPolylines(color = ~pal(velocidade),
                    weight = 3,
                    opacity = 0.8,
-                   label = lapply(label_segment, htmltools::HTML)) %>%
+                   layerId = ~segment_id,
+                   label = lapply(label_segment, htmltools::HTML),
+                   highlightOptions = highlightOptions(opacity = 1, weight = 10, color = "black")) %>%
       addCircleMarkers(data = data$stops,  
                        stroke = FALSE, fillOpacity = 0.5,
                        radius = 2,
@@ -182,7 +172,8 @@ server <- function(input, output, session) {
       
       addLegend("bottomright", pal = pal, values = ~velocidade,
                 title = "Velocidade"
-      )
+      ) %>%
+      hideGroup("Paradas")
     
     
     if (!is.null(input$route)) {
@@ -208,9 +199,9 @@ server <- function(input, output, session) {
   
   
   
-
-# download ------------------------------------------------------------------------------------
-
+  
+  # download ------------------------------------------------------------------------------------
+  
   # data
   output$download_png <- downloadHandler(
     
@@ -238,7 +229,6 @@ server <- function(input, output, session) {
         
       } else {
         
-        print("foi")
         
         # sf::st_write(data$segments, file)
         mapview::mapshot(map$map, file = file)
@@ -281,7 +271,7 @@ server <- function(input, output, session) {
         
         print("aqui")
         
-      # sf::st_write(data$segments, file)
+        # sf::st_write(data$segments, file)
         # mapview::mapshot(input[["map"]], file, cliprect = "viewport")
         # htmlwidgets::saveWidget(input[["map"]], file)
         htmlwidgets::saveWidget(input[["map"]], "temp.html", selfcontained = FALSE)
@@ -331,65 +321,218 @@ server <- function(input, output, session) {
     
   })
   
+  
+  # update intervalo selection depending on the option ------------------------------------------
+  
+  observeEvent(c(input$interval_type), {
+    
+    req(input$interval_type >= 1)
+    
+    if (input$interval_type == "Hora") {
+      
+      
+      updatePickerInput(session = session,
+                        inputId = "interval",
+                        choices = c("06:00" = "06:00|06:15|06:30|06:45",
+                                    "07:00" = "07:00|07:15|07:30|07:45",
+                                    "08:00" = "08:00|08:15|08:30|08:45",
+                                    "09:00" = "09:00|09:15|09:30|09:45",
+                                    "10:00" = "10:00|10:15|10:30|10:45",
+                                    "11:00" = "11:00|11:15|11:30|11:45")
+      )
+      
+      
+    } else if (input$interval_type == "15 Minutos") {
+      
+      
+      updatePickerInput(session = session,
+                        inputId = "interval",
+                        choices = c(intervals_list))
+      
+      
+    }
+    
+  })
+  
+  
+  
+  # enable direction ------------------------------------------------------------------------------
+  
+  observeEvent(c(input$route), {
+    # print("buh")
+    
+    updateRadioGroupButtons(session = session,
+                            inputId = "direction",
+                            disabled = FALSE)
+    
+    
+  })  
+  
+  
+  
+  # info on the right bar -----------------------------------------------------------------------
+  
+  info <- reactiveValues(segment_id = NULL,
+                         speed = NULL,
+                         stop_name_initial = NULL,
+                         stop_name_end = NULL,
+                         linhas = NULL)
+  
+  # calculate the infos to display
+  
+  observeEvent(c(input$map_shape_click), {
+    
+    # print("pururu")
+    
+    # print("input$map_shape_click")
+    # print(input$map_shape_click$id)
+    # print(data$start)
+    
+    if (input$submit == 0) {
+      
+      
+      
+      
+      data_go <- as.data.table(st_set_geometry(data$start, NULL))
+      
+      data_ok <- data_go[segment_id == input$map_shape_click$id]
+      
+      info$segment_id <- data_ok$segment_id
+      info$speed <- data_ok$velocidade
+      
+      # extracts stop from segments
+      stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
+      print(stops_segments)
+      # get stop names
+      
+      stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
+      print(stop_go)
+      stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
+      print(stops_ok)
+      
+      info$stop_name_initial <- stops_ok[1]
+      info$stop_name_end <- stops_ok[2]
+      
+      # calcular as linhas servidas
+      linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
+      print(linhas)
+      linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
+      print(linhas)
+      info$linhas <- linhas
+    
+      } else {
+      
+        
+        data_go <- as.data.table(st_set_geometry(data$segments, NULL))
+        
+        data_ok <- data_go[segment_id == input$map_shape_click$id]
+        
+        info$segment_id <- data_ok$segment_id
+        info$speed <- data_ok$velocidade
+        
+        # extracts stop from segments
+        stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
+        print("stops_segments")
+        print(stops_segments)
+        
+        # get stop names
+        stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
+        # print(stop_go)
+        stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
+        # print(stops_ok)
+        
+        info$stop_name_initial <- stops_ok[1]
+        info$stop_name_end <- stops_ok[2]
+        
+        # calcular as linhas servidas
+        linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
+        print(linhas)
+        linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
+        print(linhas)
+        info$linhas <- linhas
+      
+    }
+    
+    
+    
+  })
+  
+  output$rank_final <- renderUI({
+    
+    # gather info
+    text <- paste0("<h3>Trecho ", info$segment_id, "</h3><br>",
+                   "<span style = 'font-weight: bold'>Velocidade</span>: <span> ", round(info$speed, 1), " km/h</span><br>",
+                  "<span style = 'font-weight: bold'>Parada inicio: </span>", info$stop_name_initial, "<br>", 
+                  "<span style = 'font-weight: bold'>Parada fim: </span>", info$stop_name_end)
+    
+    tagList(
+      HTML(text)
 
-# graphs --------------------------------------------------------------------------------------
-  
-  
-  output$output_graph_month <- renderHighchart({
-    
-    # graphs
-    # data_month_all <- readRDS("data/graphs/graphs_month_all.rds")
-    # data_month <- readRDS("data/graphs/graphs_month.rds")
-    
-    highchart() %>%
-      
-      hc_add_series(data = data_month_all,
-                    hcaes(x = month, y = velocidade),
-                    type = "line",
-                    color = "#F7B93B",
-                    # lineWidth = 5,
-                    # opacity = 0.5,
-                    name = "Todas",
-                    tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
-                                   valueDecimals = 1)
-      ) %>%
-      
-      hc_title(text = "Velocidade media por mes") %>%
-      
-      # hc_legend(verticalAlign = "top") %>%
-      hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),
-               labels = list(style = list(fontSize = 15)),
-               maxPadding = 0.001) %>%
-      hc_xAxis(title = list(text = "", style = list(fontSize = 16)),
-               labels = list(style = list(fontSize = 15)),
-               type = "category")
-      # hc_add_theme(hc_theme_smpl(
-      #   # chart = list(
-      #   #   # backgroundColor = "#1C1C1C",
-      #   #   # backgroundColor = "white",
-      #   #   style = list(fontFamily = "Franklin Gothic Book"))
-      #   title = list(style = list(fontFamily = "Franklin Gothic Demi",
-      #                             textTransform = "none"))
-      #   
-      # ))
-    
-    
+    )
     
     
   })
   
   
   
-
-  output$output_graph_interval <- renderHighchart({
+  output$info_speed <- renderUI({
     
-    # graphs
-    # data_month_all <- readRDS("data/graphs/graphs_month_all.rds")
-    # data_month <- readRDS("data/graphs/graphs_month.rds")
+    if (is.null(input$map_shape_click)) speed <- NULL else speed <- paste0(round(info$speed, 1), " km/h")
+    
+    # gather info
+    value_box(
+      title = "Velocidade media",
+      value = speed,
+      showcase = bsicons::bs_icon("speedometer"),
+      theme_color = "secondary"
+      # showcase = bsicons::bs_icon("align-bottom")
+    )
+    
+    
+  })
+  
+  output$info_paradas <- renderUI({
+    
+    # gather info
+    value_box(
+      title = "Paradas do trecho",
+      HTML(paste0(info$stop_name_initial, "<br>", info$stop_name_end)),
+      showcase = bsicons::bs_icon("sign-stop"),
+      theme_color = "secondary"
+      # showcase = bsicons::bs_icon("align-bottom")
+    )
+    
+    
+  })
+  
+  output$info_linhas <- renderUI({
+    
+    # gather info
+    value_box(
+      title = "Linhas servidas",
+      HTML(paste(info$linhas, collapse = " /// ")),
+      showcase = bsicons::bs_icon("bus-front"),
+      theme_color = "secondary"
+      # showcase = bsicons::bs_icon("align-bottom")
+    )
+    
+    
+  })
+  
+  
+
+# graph close to the map ----------------------------------------------------------------------
+
+  output$output_graph_interval_map <- renderHighchart({
+    
+    req(input$map_shape_click$id)
+    
+    data_ok <- data_interval_segments[segment_id == input$map_shape_click$id]
+    # print("data_ok")
+    # print(data_ok)
     
     highchart() %>%
-      
-      hc_add_series(data = data_interval_all,
+      hc_add_series(data = data_ok,
                     hcaes(x = interval, y = velocidade),
                     type = "line",
                     color = "#F7B93B",
@@ -399,9 +542,9 @@ server <- function(input, output, session) {
                     tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
                                    valueDecimals = 1)
       ) %>%
-      
-      hc_title(text = "Velocidade media por intervalo de 15 minutos") %>%
-      
+
+      hc_title(text = sprintf("Velocidade media do trecho %s por intervalo de 15 minutos", input$map_shape_click$id)) %>%
+
       # hc_legend(verticalAlign = "top") %>%
       hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),
                labels = list(style = list(fontSize = 15)),
@@ -409,213 +552,13 @@ server <- function(input, output, session) {
       hc_xAxis(title = list(text = "", style = list(fontSize = 16)),
                labels = list(style = list(fontSize = 15)),
                type = "category")
-      # hc_add_theme(hc_theme_smpl(
-      #   # chart = list(
-      #   #   # backgroundColor = "#1C1C1C",
-      #   #   # backgroundColor = "white",
-      #   #              style = list(fontFamily = "Franklin Gothic Book"))
-      #   
-      #   title = list(style = list(fontFamily = "Franklin Gothic Demi",
-      #                             textTransform = "none"))
-      #   
-      # ))
     
     
     
     
-  })
-
-  output$output_graph_fluxo <- renderHighchart({
-    
-    # graphs
-    # data_month_all <- readRDS("data/graphs/graphs_month_all.rds")
-    # data_month <- readRDS("data/graphs/graphs_month.rds")
-    
-    highchart() %>%
-      
-      hc_add_series(data = data_fluxo_all,
-                    hcaes(x = fluxo_horario, y = velocidade),
-                    type = "line",
-                    color = "#F7B93B",
-                    # lineWidth = 5,
-                    # opacity = 0.5,
-                    name = "Todas",
-                    tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
-                                   valueDecimals = 1)
-      ) %>%
-      
-      hc_title(text = "Velocidade media por fluxo horario") %>%
-      
-      # hc_legend(verticalAlign = "top") %>%
-      hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),
-               labels = list(style = list(fontSize = 15)),
-               maxPadding = 0.001) %>%
-      hc_xAxis(title = list(text = "[veh/hora]", style = list(fontSize = 16)),
-               labels = list(style = list(fontSize = 15)),
-               type = "category")
-      # hc_add_theme(hc_theme_smpl(
-      #   # chart = list(
-      #   #   # backgroundColor = "#1C1C1C",
-      #   #   # backgroundColor = "white",
-      #   #              style = list(fontFamily = "Franklin Gothic Book"))
-      #   
-      #   title = list(style = list(fontFamily = "Franklin Gothic Demi",
-      #                             textTransform = "none"))
-      #   
-      # ))
-    
-    
-    
-    
-  })
+  })  
+  
+  source("src/graficos.R", local = TRUE)
   
   
-  reV_order <- reactiveValues(values_route = NULL, values_max = NULL,
-                              values_interval = NULL)
-  
-  # use reactive to get and sort the selected terms in the order of selection
-  ordered_colnames_route <- reactive({
-    
-    # req(input$city_compare1_initial)
-    # print("que1")
-    # print(input$city_compare1_initial)
-    
-    if (length(reV_order$values_route) > length(input$route1)) {
-      reV_order$values_route <- reV_order$values_route[reV_order$values_route %in% input$route1]
-      # print("que1")
-      
-    }else {
-      reV_order$values_route <- c(reV_order$values_route, input$route1[!input$route1 %in% reV_order$values_route])
-      # print("aqui")
-      # print(reV_order$values)
-    }
-    reV_order$values_route
-  })
-  ordered_colnames_interval <- reactive({
-    
-    # req(input$city_compare1_initial)
-    # print("que1")
-    # print(input$city_compare1_initial)
-    
-    if (length(reV_order$values_interval) > length(input$interval1)) {
-      reV_order$values_interval <- reV_order$values_interval[reV_order$values_interval %in% input$interval1]
-      # print("que1")
-      
-    }else {
-      reV_order$values_interval <- c(reV_order$values_interval, input$interval1[!input$interval1 %in% reV_order$values_interval])
-      # print("aqui")
-      # print(reV_order$values)
-    }
-    reV_order$values_interval
-  })
-  
-  
-  
-  observe({ ordered_colnames_route() }) # use an observe to update the reactive function above
-  observe({ ordered_colnames_interval() }) # use an observe to update the reactive function above
-  
-  
-  observeEvent(c(input$reset_graph1), {
-    
-    req(input$reset_graph1 >= 1)
-    
-    highchartProxy("output_graph_interval") %>%
-      hcpxy_remove_series(id = c(ordered_colnames_route(), ordered_colnames_interval()))
-    
-    highchartProxy("output_graph_month") %>%
-      hcpxy_remove_series(id = c(ordered_colnames_route(), ordered_colnames_interval()))
-    
-    updatePickerInput(
-      session = session,
-      inputId = "route1",
-      selected = character(0))
-    
-    updatePickerInput(
-      session = session,
-      inputId = "interval1",
-      selected = character(0))
-    
-    
-    
-  })
-  
-  observeEvent(c(input$route1), {
-    
-    # print(input$route)
-    
-    # req(input$submit >= 1)
-    
-    # print(tail(ordered_colnames(), 1))
-    
-    data1 <- data_interval[route_id == tail(ordered_colnames_route(), 1)]
-    data1 <- data1[, .(velocidade = round(median(velocidade), 1)), by = .(route_id, interval)]
-    setorder(data1, route_id, interval)
-    
-    
-    highchartProxy("output_graph_interval") %>%
-      # hcpxy_remove_series(id = "que") %>%
-      hcpxy_add_series(data = data1, hcaes(x = interval, y = velocidade),
-                       id = tail(ordered_colnames_route(), 1),
-                       type = "line",
-                       color = "red",
-                       name = tail(ordered_colnames_route(), 1),
-                       tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
-                                      valueDecimals = 1)
-                       
-      )
-    
-    
-    data2 <- data_month[route_id == tail(ordered_colnames_route(), 1)]
-    data2 <- data2[, .(velocidade = round(median(velocidade), 1)), by = .(month)]
-    setorder(data2, month)
-    
-    print(data1)
-    
-    highchartProxy("output_graph_month") %>%
-      # hcpxy_remove_series(id = "que") %>%
-      hcpxy_add_series(data = data2, hcaes(x = month, y = velocidade),
-                       id = tail(ordered_colnames_route(), 1),
-                       type = "line",
-                       color = "red",
-                       name = tail(ordered_colnames_route(), 1),
-                       tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
-                                      valueDecimals = 1)
-                       
-      )
-    
-    
-  })
-  
-  observeEvent(c(input$interval1), {
-    
-    # print(input$route)
-    
-    # req(input$submit >= 1)
-    
-    # print(tail(ordered_colnames(), 1))
-    
-      
-    data1 <- data_month[interval == tail(ordered_colnames_interval(), 1)]
-      
-    data1 <- data1[, .(velocidade = round(median(velocidade), 1)), by = .(month)]
-    setorder(data1, month)
-    
-    
-    highchartProxy("output_graph_month") %>%
-      # hcpxy_remove_series(id = "que") %>%
-      hcpxy_add_series(data = data1, hcaes(x = month, y = velocidade),
-                       id = tail(ordered_colnames_interval(), 1),
-                       type = "line",
-                       color = "red",
-                       name = tail(ordered_colnames_interval(), 1),
-                       tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
-                                      valueDecimals = 1)
-                       
-      )
-    
-    
-  })
-  
-  
-  
-  }
+}
