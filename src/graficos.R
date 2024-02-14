@@ -163,6 +163,8 @@ ordered_colnames_interval <- reactive({
   # print("que1")
   # print(input$city_compare1_initial)
   
+  
+  
   if (length(reV_order$values_interval) > length(input$interval1)) {
     reV_order$values_interval <- reV_order$values_interval[reV_order$values_interval %in% input$interval1]
     # print("que1")

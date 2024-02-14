@@ -7,6 +7,8 @@ segments_variables <- setDT(readRDS("data/gps_by_segment_variables.rds"))
 stops_routes <- readRDS("data/stops_gtfs_routes_sf.rds")
 stops_unique <- readRDS("data/stops_gtfs_sf.rds")
 
+routes_shapes <- readRDS("data/routes_shapes.rds")
+
 # graphs
 data_month_all <- readRDS("data/graphs/graphs_month_all.rds")
 data_month <- readRDS("data/graphs/graphs_month.rds")
@@ -17,6 +19,8 @@ data_interval_segments <- readRDS("data/graphs/graphs_interval_segments.rds")
 
 data_fluxo_all <- readRDS("data/graphs/graphs_fluxo_all.rds")
 
+trechos_possiveis <- readRDS("data/trechos_possiveis.rds")
+
 server <- function(input, output, session) {
   
   
@@ -24,7 +28,7 @@ server <- function(input, output, session) {
     
     req(input$submit >= 1)
     
-    print("guaaaa")
+    # print("guaaaa")
     
     shinyjs::disable(id = "download_png_bttn")
     shinyjs::disable(id = "download_html_bttn")
@@ -200,128 +204,7 @@ server <- function(input, output, session) {
   
   
   
-  # download ------------------------------------------------------------------------------------
-  
-  # data
-  output$download_png <- downloadHandler(
-    
-    
-    
-    # generate button with data
-    filename = function() {
-      
-      
-      # sprintf("data_%s_%s.gpkg", "", "")
-      "map.png"
-      
-    },
-    content = function(file) {
-      
-      if (input$submit == 0) {
-        
-        
-        # print(map$m)
-        
-        mapview::mapshot(map$start, file = file)
-        
-        
-        # sf::st_write(data$start, file)
-        
-      } else {
-        
-        
-        # sf::st_write(data$segments, file)
-        mapview::mapshot(map$map, file = file)
-        
-      }
-      
-    }
-    
-  )  
-  
-  
-  
-  # data
-  output$download_html <- downloadHandler(
-    
-    
-    
-    # generate button with data
-    filename = function() {
-      
-      
-      # sprintf("data_%s_%s.gpkg", "", "")
-      "map.html"
-      
-    },
-    content = function(file) {
-      
-      
-      if (input$submit == 0) {
-        
-        
-        # print(map$m)
-        
-        mapview::mapshot(map$start, file)
-        
-        
-        # sf::st_write(data$start, file)
-        
-      } else if (input$submit >= 1) {
-        
-        print("aqui")
-        
-        # sf::st_write(data$segments, file)
-        # mapview::mapshot(input[["map"]], file, cliprect = "viewport")
-        # htmlwidgets::saveWidget(input[["map"]], file)
-        htmlwidgets::saveWidget(input[["map"]], "temp.html", selfcontained = FALSE)
-        webshot::webshot("temp.html", file = file, cliprect = "viewport")
-        
-      }
-      
-    }
-    
-  )  
-  
-  
-  # data
-  output$download_data <- downloadHandler(
-    
-    
-    
-    # generate button with data
-    filename = function() {
-      
-      
-      # sprintf("data_%s_%s.gpkg", "", "")
-      "data.gpkg"
-      
-    },
-    content = function(file) {
-      
-      if (input$submit == 0) {
-        
-        
-        sf::st_write(data$start, file)
-        
-      } else {
-        
-        sf::st_write(data$segments, file)
-        
-      }
-      
-    }
-    
-  )  
-  
-  observeEvent(c(input$interval, input$route), {
-    
-    
-    
-    
-  })
-  
-  
+ 
   # update intervalo selection depending on the option ------------------------------------------
   
   observeEvent(c(input$interval_type), {
@@ -353,6 +236,35 @@ server <- function(input, output, session) {
     }
     
   })
+  observeEvent(c(input$interval_type1), {
+    
+    req(input$interval_type1 >= 1)
+    
+    if (input$interval_type1 == "Hora") {
+      
+      
+      updatePickerInput(session = session,
+                        inputId = "interval1",
+                        choices = c("06:00" = "06:00|06:15|06:30|06:45",
+                                    "07:00" = "07:00|07:15|07:30|07:45",
+                                    "08:00" = "08:00|08:15|08:30|08:45",
+                                    "09:00" = "09:00|09:15|09:30|09:45",
+                                    "10:00" = "10:00|10:15|10:30|10:45",
+                                    "11:00" = "11:00|11:15|11:30|11:45")
+      )
+      
+      
+    } else if (input$interval_type1 == "15 Minutos") {
+      
+      
+      updatePickerInput(session = session,
+                        inputId = "interval1",
+                        choices = c(intervals_list))
+      
+      
+    }
+    
+  })
   
   
   
@@ -376,7 +288,10 @@ server <- function(input, output, session) {
                          speed = NULL,
                          stop_name_initial = NULL,
                          stop_name_end = NULL,
-                         linhas = NULL)
+                         linhas = NULL,
+                         stops = NULL,
+                         stops_n = NULL,
+                         data_interval = NULL)
   
   # calculate the infos to display
   
@@ -388,71 +303,9 @@ server <- function(input, output, session) {
     # print(input$map_shape_click$id)
     # print(data$start)
     
-    if (input$submit == 0) {
-      
-      
-      
-      
-      data_go <- as.data.table(st_set_geometry(data$start, NULL))
-      
-      data_ok <- data_go[segment_id == input$map_shape_click$id]
-      
-      info$segment_id <- data_ok$segment_id
-      info$speed <- data_ok$velocidade
-      
-      # extracts stop from segments
-      stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
-      print(stops_segments)
-      # get stop names
-      
-      stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
-      print(stop_go)
-      stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
-      print(stops_ok)
-      
-      info$stop_name_initial <- stops_ok[1]
-      info$stop_name_end <- stops_ok[2]
-      
-      # calcular as linhas servidas
-      linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
-      print(linhas)
-      linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
-      print(linhas)
-      info$linhas <- linhas
+    req(isFALSE(input$selection_mode))
     
-      } else {
-      
-        
-        data_go <- as.data.table(st_set_geometry(data$segments, NULL))
-        
-        data_ok <- data_go[segment_id == input$map_shape_click$id]
-        
-        info$segment_id <- data_ok$segment_id
-        info$speed <- data_ok$velocidade
-        
-        # extracts stop from segments
-        stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
-        print("stops_segments")
-        print(stops_segments)
-        
-        # get stop names
-        stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
-        # print(stop_go)
-        stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
-        # print(stops_ok)
-        
-        info$stop_name_initial <- stops_ok[1]
-        info$stop_name_end <- stops_ok[2]
-        
-        # calcular as linhas servidas
-        linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
-        print(linhas)
-        linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
-        print(linhas)
-        info$linhas <- linhas
-      
-    }
-    
+   
     
     
   })
@@ -474,50 +327,50 @@ server <- function(input, output, session) {
   })
   
   
-  
-  output$info_speed <- renderUI({
-    
-    if (is.null(input$map_shape_click)) speed <- NULL else speed <- paste0(round(info$speed, 1), " km/h")
-    
-    # gather info
-    value_box(
-      title = "Velocidade media",
-      value = speed,
-      showcase = bsicons::bs_icon("speedometer"),
-      theme_color = "secondary"
-      # showcase = bsicons::bs_icon("align-bottom")
-    )
-    
-    
-  })
-  
-  output$info_paradas <- renderUI({
-    
-    # gather info
-    value_box(
-      title = "Paradas do trecho",
-      HTML(paste0(info$stop_name_initial, "<br>", info$stop_name_end)),
-      showcase = bsicons::bs_icon("sign-stop"),
-      theme_color = "secondary"
-      # showcase = bsicons::bs_icon("align-bottom")
-    )
-    
-    
-  })
-  
-  output$info_linhas <- renderUI({
-    
-    # gather info
-    value_box(
-      title = "Linhas servidas",
-      HTML(paste(info$linhas, collapse = " /// ")),
-      showcase = bsicons::bs_icon("bus-front"),
-      theme_color = "secondary"
-      # showcase = bsicons::bs_icon("align-bottom")
-    )
-    
-    
-  })
+  # 
+  # output$info_speed <- renderUI({
+  #   
+  #   if (is.null(input$map_shape_click)) speed <- NULL else speed <- paste0(round(info$speed, 1), " km/h")
+  #   
+  #   # gather info
+  #   value_box(
+  #     title = "Velocidade media",
+  #     value = speed,
+  #     showcase = bsicons::bs_icon("speedometer"),
+  #     theme_color = "secondary"
+  #     # showcase = bsicons::bs_icon("align-bottom")
+  #   )
+  #   
+  #   
+  # })
+  # 
+  # output$info_paradas <- renderUI({
+  #   
+  #   # gather info
+  #   value_box(
+  #     title = "Paradas do trecho",
+  #     HTML(paste0(info$stop_name_initial, "<br>", info$stop_name_end)),
+  #     showcase = bsicons::bs_icon("sign-stop"),
+  #     theme_color = "secondary"
+  #     # showcase = bsicons::bs_icon("align-bottom")
+  #   )
+  #   
+  #   
+  # })
+  # 
+  # output$info_linhas <- renderUI({
+  #   
+  #   # gather info
+  #   value_box(
+  #     title = "Linhas servidas",
+  #     HTML(paste(info$linhas, collapse = " /// ")),
+  #     showcase = bsicons::bs_icon("bus-front"),
+  #     theme_color = "secondary"
+  #     # showcase = bsicons::bs_icon("align-bottom")
+  #   )
+  #   
+  #   
+  # })
   
   
 
@@ -559,6 +412,8 @@ server <- function(input, output, session) {
   })  
   
   source("src/graficos.R", local = TRUE)
+  source("src/modo_selecao.R", local = TRUE)
+  source("src/download.R", local = TRUE)
   
   
 }

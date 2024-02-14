@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Encode+Sans&display=swap');
+
+
+
+.sidebar_filters {
+  border-radius: 24px !important;
+background: rgba(240, 125, 23, 0.15) !important;
+}
+
+
+.filter_intervalo {
+  padding: 15px;
+  border-radius: 10px;
+background: #FFF;
+box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+
+}
+
+.btn {
+  border-color: black !important;
+  border-radius: 43px;
+background: #FFF;
+}
+
+#submit, #submit_selection {
+  background: #F07D17;
+  color: white;
+  box-shadow: 0px 4px 4px 0px #00000040;
+  border-color: transparent !important;
+}
+
+#submit:hover, #submit_selection:hover {
+  background: #c06412;
+}
+
+#resetar_selecao {
+  background: white;
+  color: #F07D17;
+  box-shadow: 0px 4px 4px 0px #00000040;
+  border-color: transparent !important;
+}
+
+
+#resetar_selecao:hover {
+  background: #e5e5e5;
+}
+
+h3 {
+  font-size: 20px;
+  color: #434343;
+font-family: "Encode Sans";
+}
+
+.well {
+  background-color: white;
+        margin-bottom: 0px;
+    margin-top: 0px;
+}
+
+.html-fill-container {
+  z-index: 0;
+  
+}
+
+.nav-pills {
+  color: black;
+    background-color: white;
+}
+
+.nav-link .active, .nav-link.active, .nav-pills>li>a.active  {
+  background-color: #F07D17 !important;
+  
+}
+
+.awesome-checkbox {
+    padding-left: 10px;
+}
+
+.form-check-input:checked, .shiny-input-container .checkbox input:checked, .shiny-input-container .checkbox-inline input:checked, .shiny-input-container .radio input:checked, .shiny-input-container .radio-inline input:checked {
+  background-color: #F07D17;
+    border-color: #F07D17;
+}
+
+.checkbox-primary input[type="checkbox"]:checked + label::before, .checkbox-primary input[type="radio"]:checked + label::before {
+    background-color: #F07D17;
+    border-color: #F07D17;
+}
+
+.bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-primary, .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-primary {
+    background: #F07D17;
+    color: #fff;
+}
+
+.bootstrap-select>.dropdown-toggle {
+      border: 1px solid #ced4da;
+    /* display: block; */
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px transparent;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
+    -o-appearance: none;
+    border-radius: 0.375rem;
+    transition: border-color 0.15s ease-in-out,box-shadow 0.15s ease-in-out;
+}
