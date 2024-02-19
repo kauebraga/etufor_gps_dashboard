@@ -1,0 +1,11 @@
+.download_trecho_report {
+  float: right;
+    background: #F07D17 !important;
+  color: white !important;
+  box-shadow: 0px 4px 4px 0px #00000040 !important;
+  border-color: transparent !important;
+}
+
+.download_trecho_report:hover {
+  background: #c06412 !important;
+}

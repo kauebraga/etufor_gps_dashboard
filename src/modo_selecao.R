@@ -11,25 +11,28 @@ observeEvent(c(input$selection_mode), {
   shinyjs::disable("submit_selection1")
   shinyjs::show("resetar_selecao1")
   
-  m <- leafletProxy("map") %>%
-    clearMarkers() %>%
-    clearControls() %>%
-    clearShapes() %>%
-    addPolylines(data = data$start,
-                 color = "black",
-                 weight = 2,
-                 opacity = 0.8,
-                 layerId = ~segment_id,
-                 # label = lapply(label_segment, htmltools::HTML),
-                 highlightOptions = highlightOptions(opacity = 1, weight = 10, color = "#F07D17")) %>%
-    addCircleMarkers(data = stops_unique,  
-                     stroke = FALSE, fillOpacity = 0.5,
-                     radius = 2,
-                     color = "black",
-                     group = "Paradas")
+  shinyjs::disable("sidebar_maps")
   
-  
-  m
+  # 
+  # m <- leafletProxy("map") %>%
+  #   clearMarkers() %>%
+  #   clearControls() %>%
+  #   clearShapes() %>%
+  #   addPolylines(data = data$start,
+  #                color = "black",
+  #                weight = 2,
+  #                opacity = 0.8,
+  #                layerId = ~segment_id,
+  #                # label = lapply(label_segment, htmltools::HTML),
+  #                highlightOptions = highlightOptions(opacity = 1, weight = 10, color = "#F07D17")) %>%
+  #   addCircleMarkers(data = stops_unique,  
+  #                    stroke = FALSE, fillOpacity = 0.5,
+  #                    radius = 2,
+  #                    color = "black",
+  #                    group = "Paradas")
+  # 
+  # 
+  # m
   
   
 })
@@ -57,7 +60,7 @@ observeEvent(c(input$selection_mode), {
   
   shinyjs::hide("submit_selection1")
   shinyjs::hide("resetar_selecao1")
-  
+  shinyjs::enable("sidebar_maps")
   
   
   element$selected <- NULL
@@ -172,7 +175,7 @@ observeEvent(c(input$submit_selection), {
   req(input$submit_selection >= 1)
   
   # filter the data related to the segments
-  if (input$submit == 0) {
+  # if (input$submit == 0) {
     
     data_go <- as.data.table(st_set_geometry(data$start, NULL))
     
@@ -202,46 +205,50 @@ observeEvent(c(input$submit_selection), {
     # by interval
     data$interval <- segments_variables[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("interval")]
     
+    # by month
+    data$month <- segments_variables[, month := "2023-03"]
+    data$month <- data$month[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("month")]
     
-  } else {
     
-    
-    data_go <- as.data.table(st_set_geometry(data$segments, NULL))
-    
-    data_ok <- data_go[segment_id %in% element$selected]
-    
-    info$segment_id <- data_ok$segment_id
-    info$speed <- data_ok$velocidade
-    
-    # extracts stop from segments
-    stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
-    
-    # get stop names
-    stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
-    # print(stop_go)
-    stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
-    # print(stops_ok)
-    
-    info$stop_name_initial <- stops_ok[1]
-    info$stop_name_end <- stops_ok[2]
-    
-    # calcular as linhas servidas
-    linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
-    print(linhas)
-    linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
-    print(linhas)
-    info$linhas <- linhas
-    
-  }
+  # } else {
+  #   
+  #   
+  #   data_go <- as.data.table(st_set_geometry(data$segments, NULL))
+  #   
+  #   data_ok <- data_go[segment_id %in% element$selected]
+  #   
+  #   info$segment_id <- data_ok$segment_id
+  #   info$speed <- data_ok$velocidade
+  #   
+  #   # extracts stop from segments
+  #   stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
+  #   
+  #   # get stop names
+  #   stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
+  #   # print(stop_go)
+  #   stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
+  #   # print(stops_ok)
+  #   
+  #   info$stop_name_initial <- stops_ok[1]
+  #   info$stop_name_end <- stops_ok[2]
+  #   
+  #   # calcular as linhas servidas
+  #   linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
+  #   print(linhas)
+  #   linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
+  #   print(linhas)
+  #   info$linhas <- linhas
+  #   
+  # }
   
   
   print("po")
   # nav_select(
   #   id = "navbar1",
-  #   selected = c("map"))
+  #   selected = c("map1"))
   
-  # updateTabsetPanel(session, inputId = 'navbar1', selected = 'map')
-  # updateTabsetPanel(session, inputId = 'map', selected = 'tab_trechos')
+  updateTabsetPanel(session, inputId = 'navbar1', selected = 'map1')
+  updateTabsetPanel(session, inputId = 'map1', selected = 'tab_trechos')
   # updateTabsetPanel(session, inputId = 'mapnavbar1', selected = 'tab_trechos')
   
   # updateNavbarPage(
@@ -249,7 +256,7 @@ observeEvent(c(input$submit_selection), {
   #   inputId = "navbar1",
   #   selected = "graphs"
   # )
-  updateTabsetPanel(inputId = 'tab-9191-4', selected = 'tab_trechos')
+  # updateTabsetPanel(inputId = 'map1', selected = 'tab_trechos')
   
   
 })
@@ -257,6 +264,9 @@ observeEvent(c(input$submit_selection), {
 
 # graph for speed
 output$output_graph_speed_segments <- renderHighchart({
+  
+  req(isTRUE(input$selection_mode))
+  
   
   col_stops <- data.frame(
     q = c(0.3, 0.5, 0.6),
@@ -309,6 +319,8 @@ output$output_graph_interval_segments <- renderHighchart({
   # data_month_all <- readRDS("data/graphs/graphs_month_all.rds")
   # data_month <- readRDS("data/graphs/graphs_month.rds")
   
+  req(isTRUE(input$selection_mode))
+  
   setorder(data$interval, interval)
   
   highchart() %>%
@@ -350,34 +362,98 @@ output$output_graph_interval_segments <- renderHighchart({
 })
 
 
+
+# graph for speeds by month
+output$output_graph_month_segments <- renderHighchart({
+  
+  # graphs
+  # data_month_all <- readRDS("data/graphs/graphs_month_all.rds")
+  # data_month <- readRDS("data/graphs/graphs_month.rds")
+  
+  req(isTRUE(input$selection_mode))
+  
+  highchart() %>%
+    
+    hc_add_series(data = data$month,
+                  hcaes(x = month, y = round(velocidade, 1)),
+                  type = "line",
+                  color = "#F7B93B",
+                  # lineWidth = 5,
+                  # opacity = 0.5,
+                  name = "Todas",
+                  tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
+                                 valueDecimals = 1)
+    ) %>%
+    
+    # hc_title(text = "Velocidade media por mes") %>%
+    
+    # hc_legend(verticalAlign = "top") %>%
+    hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),
+             labels = list(style = list(fontSize = 15)),
+             maxPadding = 0.001) %>%
+    hc_xAxis(title = list(text = "", style = list(fontSize = 16)),
+             labels = list(style = list(fontSize = 15)),
+             type = "category")
+  # hc_add_theme(hc_theme_smpl(
+  #   # chart = list(
+  #   #   # backgroundColor = "#1C1C1C",
+  #   #   # backgroundColor = "white",
+  #   #   style = list(fontFamily = "Franklin Gothic Book"))
+  #   title = list(style = list(fontFamily = "Franklin Gothic Demi",
+  #                             textTransform = "none"))
+  #   
+  # ))
+  
+  
+})
+
+
 # resetar selecao
 
 observeEvent(c(input$resetar_selecao), {
-  
+
   req(isTRUE(input$selection_mode), element$selection == 1)
-  
+
   element$selected <- NULL
+
+  # restore the map
+  pal <- colorNumeric(
+    palette = "RdYlBu",
+    domain = data$start$velocidade)
   
-  m <- leafletProxy("map") %>%
+  # label for clicking on the segment
+  label_segment <- paste0("<b>Velocidade:</b>", round(data$start$velocidade, 1), " km/h")
+  
+  
+  m <- 
+    leafletProxy("map", data = data$start) %>%    
     clearMarkers() %>%
     clearControls() %>%
     clearShapes() %>%
-    addPolylines(data = data$start,
-                 color = "black",
+    addPolylines(color = ~pal(velocidade),
                  weight = 2,
                  opacity = 0.8,
                  layerId = ~segment_id,
-                 # label = lapply(label_segment, htmltools::HTML),
-                 highlightOptions = highlightOptions(opacity = 1, weight = 10, color = "#F07D17")) %>%
+                 label = lapply(label_segment, htmltools::HTML),
+                 highlightOptions = highlightOptions(opacity = 1, weight = 4, color = "black")) %>%
+    
     addCircleMarkers(data = stops_unique,  
                      stroke = FALSE, fillOpacity = 0.5,
                      radius = 2,
                      color = "black",
-                     group = "Paradas")
-  
+                     group = "Paradas") %>%
+    
+    addLayersControl(baseGroups = c("Light", "Dark", "Satellite"),
+                     overlayGroups = c("Paradas"),
+                     options = layersControlOptions(collapsed = FALSE),
+                     position = "bottomright") %>%
+    addLegend("bottomright", pal = pal, values = ~velocidade,
+              title = "Velocidade (km/h)"
+    ) %>%
+    hideGroup("Paradas")
   
   m
-  
+
 })
 
 
@@ -402,7 +478,7 @@ observeEvent(c(input$resetar_selecao), {
 
 output$info_paradas_n <- renderUI({
   
-  
+  req(isTRUE(input$selection_mode))
   
   tagList(
     div(style = "font-family: Encode Sans; font-size: 90px; font-weight: 700; line-height: 113px; letter-spacing: 0em; text-align: center;",  
@@ -415,6 +491,7 @@ output$info_paradas_n <- renderUI({
 
 output$info_paradas <- renderUI({
   
+  req(isTRUE(input$selection_mode))  
   
   tagList(
     div(style = "font-family: Encode Sans;font-size: 14px;font-weight: 400;line-height: 25px;letter-spacing: 0em;text-align: left; overflow-y: scroll; max-height: 150px",
@@ -448,6 +525,8 @@ output$info_linhas <- renderUI({
   #   theme_color = "secondary"
   #   # showcase = bsicons::bs_icon("align-bottom")
   # )
+  
+  req(isTRUE(input$selection_mode))
   
   # idenfy the names
   routes <- subset(routes_shapes, shape_id %in% info$linhas)
@@ -484,7 +563,7 @@ output$info_linhas <- renderUI({
   
   
   tagList(
-    div(
+    div(style="overflow-y: scroll; max-height: 150px",
       ida,
       volta
       

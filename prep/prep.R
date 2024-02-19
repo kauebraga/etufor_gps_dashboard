@@ -31,6 +31,11 @@ readr::write_rds(stops, "data/stops_gtfs_routes_sf.rds")
 readr::write_rds(stops_unique, "data/stops_gtfs_sf.rds")
 
 
+stringi::stri_trans_general(stops$stop_name, id = "ASCII//TRANSLIT")
+
+ui <- gtfstools::read_gtfs("data-raw/gtfs_20230519_mod.zip")
+
+ui$stops$stop_name
 
 # segments ------------------------------------------------------------------------------------
 

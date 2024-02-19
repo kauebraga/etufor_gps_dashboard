@@ -6,6 +6,10 @@ library(sf)
 library(shinyWidgets)
 library(highcharter)
 library(shinyjs)
+library(shinyscreenshot)
+# library(rmarkdown)
+# library(capture)
+
 # shinyWidgets::shinyWidgetsGallery()
 # webshot::install_phantomjs()
 

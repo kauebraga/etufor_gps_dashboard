@@ -57,7 +57,7 @@ output$output_graph_interval <- renderHighchart({
     
     hc_add_series(data = data_interval_all,
                   hcaes(x = interval, y = velocidade),
-                  type = "line",
+                  type = "area",
                   color = "#F7B93B",
                   # lineWidth = 5,
                   # opacity = 0.5,
@@ -66,7 +66,7 @@ output$output_graph_interval <- renderHighchart({
                                  valueDecimals = 1)
     ) %>%
     
-    hc_title(text = "Velocidade media por intervalo de 15 minutos") %>%
+    # hc_title(text = "Velocidade media por intervalo de 15 minutos") %>%
     
     # hc_legend(verticalAlign = "top") %>%
     hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),

@@ -1,10 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Encode+Sans&display=swap');
 
-
+#map {
+  height: calc(100vh - 240px) !important;
+}
 
 .sidebar_filters {
   border-radius: 24px !important;
 background: rgba(240, 125, 23, 0.15) !important;
+}
+
+#sidebar_maps:disabled {
+  background-color: dimgrey;
+  color: linen;
+  opacity: 1;
+}
+
+.sidebar_filters_graph {
+  border-radius: 24px !important;
+background: rgba(240, 125, 23, 0.15) !important;
+background-color: white !important;
 }
 
 
@@ -16,20 +30,37 @@ box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
 
 }
 
+.filter_intervalo1 {
+  padding: 15px;
+  border-radius: 10px;
+background: rgba(240, 125, 23, 0.15) !important;
+box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+
+}
+
 .btn {
   border-color: black !important;
   border-radius: 43px;
 background: #FFF;
 }
 
-#submit, #submit_selection {
+#submit, #submit_selection, #reset_graph1, #download_html1_bttn, #download_gpkg1_bttn, #download_png1_bttn {
   background: #F07D17;
   color: white;
   box-shadow: 0px 4px 4px 0px #00000040;
   border-color: transparent !important;
+border-radius: 43px
+
+  
+
 }
 
-#submit:hover, #submit_selection:hover {
+#download_html1_bttn, #download_gpkg1_bttn, #download_png1_bttn {
+  margin: auto;
+  display: block;
+}
+
+#submit:hover, #submit_selection:hover, #reset_graph1:hover,  #download_html1_bttn:hover, #download_gpkg1_bttn:hover, #download_png1_bttn:hover {
   background: #c06412;
 }
 
@@ -67,9 +98,13 @@ font-family: "Encode Sans";
     background-color: white;
 }
 
-.nav-link .active, .nav-link.active, .nav-pills>li>a.active  {
+.nav-pills>li>a.active  {
   background-color: #F07D17 !important;
   
+}
+
+.nav-underline .nav-link.active, .nav-link {
+  font-size: 20px;
 }
 
 .awesome-checkbox {

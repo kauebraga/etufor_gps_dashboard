@@ -40,6 +40,7 @@ server <- function(input, output, session) {
   # set data
   data <- reactiveValues(start = NULL,
                          segments = NULL,
+                         month = NULL,
                          stops = NULL)
   map <- reactiveValues(start = NULL,
                         map1 = NULL)
