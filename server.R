@@ -105,6 +105,9 @@ server <- function(input, output, session) {
     
     req(input$submit >= 1)
     
+    print("input$interval")
+    print(input$interval)
+    
     
     # intervalo <- unlist(strsplit(intervalo, "\\|"))
     
@@ -112,19 +115,19 @@ server <- function(input, output, session) {
     # # filter velocidade
     segments_data <- segments_variables[velocidade <= input$velocidade_maxima]
     # # filter interval
-    segments_data <- if (is.null(input$intervalo)) segments_data else segments_data[interval %in% unlist(strsplit(intervalo, "\\|"))]
+    segments_data <- if (is.null(input$interval)) segments_data else segments_data[interval %in% unlist(strsplit(input$interval, "\\|"))]
     # # filter route
     segments_data <- if (is.null(input$route)) segments_data else segments_data[route_id %in% input$route]
     # # filter direction
-    print(input$direction)
     segments_data <- if (is.null(input$route)) segments_data else if (input$direction == "all") segments_data else segments_data[direction %in% input$direction]
+    print("segments_data")
     print(segments_data)
     
     # filter stops
     stops <- if (is.null(input$route)) stops_unique else if (input$direction == "all") subset(stops_routes, route_id %in% input$route) else subset(stops_routes, route_id %in% input$route & direction %in% input$direction)
     # # NEW CODE finishds Here
     
-    segments_data <- segments_data[, .(velocidade = median(velocidade)), by = segment_id]
+    segments_data <- segments_data[, .(velocidade = mean(velocidade)), by = segment_id]
     segments_data <- merge(segments_data, segments_sf)
     segments_data <- sf::st_sf(segments_data, crs = 4326)
     
@@ -290,8 +293,12 @@ server <- function(input, output, session) {
                          stop_name_initial = NULL,
                          stop_name_end = NULL,
                          linhas = NULL,
+                         linhas_ida = NULL,
+                         linhas_volta = NULL,
                          stops = NULL,
+                         stops_id = NULL,
                          stops_n = NULL,
+                         stops_sf = NULL,
                          data_interval = NULL)
   
   # calculate the infos to display

@@ -130,16 +130,26 @@ output$report <- downloadHandler(
     # Copy the report file to a temporary directory before processing it, in
     # case we don't have write permissions to the current working dir (which
     # can happen when deployed).
-    tempReport <- file.path(tempdir(), "report.Rmd")
-    file.copy("report.Rmd", tempReport, overwrite = TRUE)
+    # tempReport <- file.path(tempdir(), "report.Rmd")
+    # file.copy("report.Rmd", tempReport, overwrite = TRUE)
     
     # Set up parameters to pass to Rmd document
-    params <- list(n = data$start)
+    params <- list(info_speed = info$speed,
+                   data_interval = data$interval,
+                   data_start = data$start,
+                   element_selected = element$selected,
+                   data_month = data$month,
+                   info_stops = info$stops,
+                   info_linhas_ida = info$linhas_ida,
+                   info_linhas_volta = info$linhas_volta,
+                   info_stops_sf = info$stops_sf
+                   
+                   )
     
     # Knit the document, passing in the `params` list, and eval it in a
     # child of the global environment (this isolates the code in the document
     # from the code in this app).
-    rmarkdown::render(tempReport, output_file = file,
+    rmarkdown::render("report.Rmd", output_file = file,
                       params = params,
                       envir = new.env(parent = globalenv())
     )

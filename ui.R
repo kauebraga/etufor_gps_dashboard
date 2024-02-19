@@ -107,7 +107,7 @@ page_navbar(
                 div(
                   img(src = "img/fortaleza.png", height = "45", span("Mapa", style = "font-family: Encode Sans; font-size: 30px; font-weight: 600; line-height: 37.5px; letter-spacing: 0em; text-align: left; color: #434343; padding-left: 10px"))
                 ),
-                leafletOutput("map"
+                leafletOutput("map",
                               # height = "calc(100vh - 20px)"
                 ),
                 absolutePanel(bottom = 20, left = 30,
@@ -144,8 +144,8 @@ page_navbar(
                   #   loading = loading(),
                   #   icon("camera"), "Take screenshot of results"
                   # ),
-                  screenshotButton(label = "Baixar figura (.png)", id = "result-block", class = "download_trecho_report")
-                  # downloadButton("report", "Gerar relatorio (.pdf)", class = "download_trecho_report")
+                  # screenshotButton(label = "Baixar figura (.png)", id = "result-block", class = "download_trecho_report"),
+                  downloadButton("report", "Baixar relatorio (.html)", class = "download_trecho_report")
                 ),
                 div(id = "result-block",
                     layout_columns(col_widths = c(3, 5, 4, 2, 5, 5),

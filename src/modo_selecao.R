@@ -157,8 +157,6 @@ observeEvent(c(input$map_shape_click), {
   
   m
   
-  print(element$selected)
-  
   
   
   
@@ -176,40 +174,44 @@ observeEvent(c(input$submit_selection), {
   
   # filter the data related to the segments
   # if (input$submit == 0) {
-    
-    data_go <- as.data.table(st_set_geometry(data$start, NULL))
-    
-    data_ok <- data_go[segment_id %in% element$selected]
-    # print(data_ok)
-    
-    info$segment_id <- data_ok$segment_id
-    info$speed <- mean(data_ok$velocidade)
-    
-    # extracts stop from segments
-    stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
-    # get stop names
-    
-    stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
-    stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
-    
-    # info$stop_name_initial <- stops_ok[1]
-    # info$stop_name_end <- stops_ok[2]
-    info$stops <- unique(stops_ok)
-    
-    # calcular as linhas servidas
-    linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
-    linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
-    info$linhas <- linhas
-    
-    
-    # by interval
-    data$interval <- segments_variables[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("interval")]
-    
-    # by month
-    data$month <- segments_variables[, month := "2023-03"]
-    data$month <- data$month[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("month")]
-    
-    
+  
+  data_go <- as.data.table(st_set_geometry(data$start, NULL))
+  
+  data_ok <- data_go[segment_id %in% element$selected]
+  # print(data_ok)
+  
+  info$segment_id <- data_ok$segment_id
+  info$speed <- mean(data_ok$velocidade)
+  
+  # extracts stop from segments
+  stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
+  # get stop names
+  
+  stop_go <- as.data.table(st_set_geometry(stops_routes, NULL))
+  stops_ok <- unique(with(stop_go, stop_name[match(stops_segments, stop_id)]))
+  
+  # info$stop_name_initial <- stops_ok[1]
+  # info$stop_name_end <- stops_ok[2]
+  
+  
+  info$stops_id <- unique(stops_segments)
+  info$stops <- unique(stops_ok)
+  info$stops_sf <- subset(stops_unique, stop_id %in% stops_segments)
+  
+  # calcular as linhas servidas
+  linhas <- unique(stop_go[stop_id == stops_segments[1] & shift(stop_id, 1, type = "lead") == stops_segments[2]]$shape_id)
+  linhas <- gsub(pattern = "shape", replacement = "", x = linhas)
+  info$linhas <- linhas
+  
+  
+  # by interval
+  data$interval <- segments_variables[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("interval")]
+  
+  # by month
+  data$month <- segments_variables[, month := "2023-03"]
+  data$month <- data$month[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("month")]
+  
+  
   # } else {
   #   
   #   
@@ -411,11 +413,11 @@ output$output_graph_month_segments <- renderHighchart({
 # resetar selecao
 
 observeEvent(c(input$resetar_selecao), {
-
+  
   req(isTRUE(input$selection_mode), element$selection == 1)
-
+  
   element$selected <- NULL
-
+  
   # restore the map
   pal <- colorNumeric(
     palette = "RdYlBu",
@@ -453,7 +455,7 @@ observeEvent(c(input$resetar_selecao), {
     hideGroup("Paradas")
   
   m
-
+  
 })
 
 
@@ -482,7 +484,7 @@ output$info_paradas_n <- renderUI({
   
   tagList(
     div(style = "font-family: Encode Sans; font-size: 90px; font-weight: 700; line-height: 113px; letter-spacing: 0em; text-align: center;",  
-        length(info$stops)),
+        length(info$stops_id)),
     div(style = "font-family: Encode Sans; font-size: 18px; font-weight: 500; line-height: 30px; letter-spacing: 0em; text-align: center;",
         "pontos de ônibus no trecho")
   )
@@ -533,7 +535,7 @@ output$info_linhas <- renderUI({
   
   sentidos <- unique(routes$direction)
   
-  ida <- if ("I" %in% sentidos) {
+  info$linhas_ida <- if ("I" %in% sentidos) {
     
     routes_ok <-subset(routes, direction == "I")
     routes_ok <- paste0(routes_ok$route_id, " - ", routes_ok$route_long_name)
@@ -547,7 +549,7 @@ output$info_linhas <- renderUI({
     
   } else ""
   
-  volta <- if ("V" %in% sentidos) {
+  info$linhas_volta <- if ("V" %in% sentidos) {
     
     routes_ok <-subset(routes, direction == "V")
     routes_ok <- paste0(routes_ok$route_id, " - ", routes_ok$route_long_name)
@@ -564,9 +566,9 @@ output$info_linhas <- renderUI({
   
   tagList(
     div(style="overflow-y: scroll; max-height: 150px",
-      ida,
-      volta
-      
+        info$linhas_ida,
+        info$linhas_volta
+        
     ))
   
   

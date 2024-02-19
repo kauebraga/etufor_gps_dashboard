@@ -1,0 +1,245 @@
+---
+title: Relatório de velocidades
+date: "`r format(Sys.Date(), format = '%d-%m-%Y')`"
+author: "ETUFOR"
+output: 
+  html_document:
+    css: "style_report.css"
+params:
+  info_speed: NA
+  data_interval: NA
+  data_start: NA
+  element_selected: NA
+  data_month: NA
+  info_stops: NA
+  info_linhas_ida: NA
+  info_linhas_volta: NA
+  info_stops_sf: NA
+---
+
+## Trechos selecionados
+
+<div style="box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px; margin-bottom: 30px">
+
+```{r, echo = FALSE}
+
+data <- subset(params$data_start, segment_id %in% params$element_selected)
+
+leaflet(data = "map", width = "100%") %>%
+  addProviderTiles(providers$CartoDB.DarkMatter, group = "Dark") %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "Light", layerId = "epa") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+  addPolylines(data = data,
+               color = "#F07D17",
+               weight = 10,
+               opacity = 0.8,
+               layerId = ~segment_id,
+               # label = lapply(label_segment, htmltools::HTML),
+               highlightOptions = highlightOptions(opacity = 1, weight = 10, color = "#F07D17")) %>%
+      addCircleMarkers(data = params$info_stops_sf,  
+                     stroke = FALSE, fillOpacity = 0.5,
+                     radius = 5,
+                     color = "black",
+                     group = "Paradas") %>%
+  addLayersControl(baseGroups = c("Light", "Dark", "Satellite"),
+                   overlayGroups = c("Paradas"),
+                   options = layersControlOptions(collapsed = FALSE),
+                   position = "bottomright") 
+
+```
+
+</div>
+
+<div style= "margin-bottom: 100px; height: 200px">
+
+<div class='fluid-row'>
+
+<div class='col-md-4'>
+
+### Pontos de ônibus
+
+
+```{r, echo = FALSE}
+div(
+  style = "box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px; background: #F07D1726;",
+  
+  tagList(
+    div(style = "font-family: Encode Sans; font-size: 90px; font-weight: 700; line-height: 113px; letter-spacing: 0em; text-align: center;",  
+        length(params$info_stops)),
+    div(style = "font-family: Encode Sans; font-size: 18px; font-weight: 500; line-height: 30px; letter-spacing: 0em; text-align: center;",
+        "pontos de ônibus no trecho")
+  )
+)
+
+```
+</div>
+
+<div class='col-md-4'>
+
+###  Localização dos pontos de ônibus
+
+
+
+```{r, echo = FALSE}
+
+div(
+  style = "box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px;",
+  
+  tagList(
+    div(style = "font-family: Encode Sans;font-size: 14px;font-weight: 400;line-height: 25px;letter-spacing: 0em;text-align: left; overflow-y: scroll; max-height: 150px",
+        HTML("<ul>"),
+        HTML(paste0("<li>", params$info_stops, "</li>")),
+        HTML("</ul>")
+    ))
+)
+
+```
+
+</div>
+
+<div class='col-md-4'>
+
+
+### Linhas
+
+
+```{r, echo = FALSE}
+
+div(
+  style = "box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px; background: #F07D1726;",
+  
+  tagList(
+    div(style="overflow-y: scroll; max-height: 150px",
+        params$info_linhas_ida,
+        params$info_linhas_volta
+        
+    ))
+)
+
+```
+</div>
+</div>
+</div>
+
+## Velocidade média
+
+<div style="box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px">
+
+```{r, echo = FALSE}
+library(highcharter)
+
+col_stops <- data.frame(
+  q = c(0.3, 0.5, 0.6),
+  c = c('#DF5353', '#DDDF0D', '#55BF3B'),
+  stringsAsFactors = FALSE
+)
+
+
+highchart() %>%
+  hc_chart(type = "solidgauge") %>%
+  hc_pane(
+    startAngle = -90,
+    endAngle = 90,
+    background = list(
+      outerRadius = '100%',
+      innerRadius = '60%',
+      shape = "arc"
+    )
+  ) %>%
+  hc_tooltip(enabled = FALSE) %>% 
+  hc_yAxis(
+    stops = list_parse2(col_stops),
+    lineWidth = 0,
+    minorTickWidth = 0,
+    tickAmount = 2,
+    min = 0,
+    max = 30,
+    labels = list(y = 26, style = list(fontSize = "22px"))
+  ) %>%
+  hc_add_series(
+    data = round(params$info_speed, 2),
+    dataLabels = list(
+      y = -50,
+      borderWidth = 0,
+      useHTML = TRUE,
+      # style = list(fontSize = "40px"),
+      format = '<div style="text-align:center"><span style="font-size:25px">{y}</span><br/><span style="font-size:12px;opacity:0.4">km/h</span></div>'
+    )
+  ) %>% 
+  hc_size(height = 300)
+
+```
+</div>
+
+## Velocidade média durante o dia
+
+<div style="box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px">
+
+```{r, echo = FALSE}
+
+setorder(params$data_interval, interval)
+
+highchart() %>%
+  
+  hc_add_series(data = params$data_interval,
+                hcaes(x = interval, y = velocidade),
+                type = "area",
+                color = "#F7B93B",
+                # lineWidth = 5,
+                # opacity = 0.5,
+                name = "Todas",
+                tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
+                               valueDecimals = 1)
+  ) %>%
+  
+  # hc_title(text = "Velocidade media por intervalo de 15 minutos") %>%
+  
+  # hc_legend(verticalAlign = "top") %>%
+  hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),
+           labels = list(style = list(fontSize = 15)),
+           maxPadding = 0.001) %>%
+  hc_xAxis(title = list(text = "", style = list(fontSize = 16)),
+           labels = list(style = list(fontSize = 15)),
+           type = "category") %>%
+  hc_size(width = 800)
+
+
+
+```
+</div>
+
+## Velocidade media durante o mes
+
+<div style="box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px">
+
+```{r, echo = FALSE}
+
+highchart() %>%
+  
+  hc_add_series(data = params$data_month,
+                hcaes(x = month, y = round(velocidade, 1)),
+                type = "line",
+                color = "#F7B93B",
+                # lineWidth = 5,
+                # opacity = 0.5,
+                name = "Todas",
+                tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
+                               valueDecimals = 1)
+  ) %>%
+  
+  # hc_title(text = "Velocidade media por mes") %>%
+  
+  # hc_legend(verticalAlign = "top") %>%
+  hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),
+           labels = list(style = list(fontSize = 15)),
+           maxPadding = 0.001) %>%
+  hc_xAxis(title = list(text = "", style = list(fontSize = 16)),
+           labels = list(style = list(fontSize = 15)),
+           type = "category") %>%
+  hc_size(width = 800)
+
+```
+</div>
+
+
+
