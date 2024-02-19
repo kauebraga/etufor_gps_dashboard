@@ -47,7 +47,8 @@ segments <- readRDS("data/segments_gtfs_unique.rds") %>% st_transform(4326)
 # graph #2: by interval -----------------------------------------------------------------------
 
 
-data_interval_all <- setDT(segments_variables)[, .(velocidade = weighted.mean(velocidade, w = n)), by = .(interval, segment_id)]
+data_interval_all <- setDT(segments_variables)[, .(velocidade = weighted.mean(velocidade, w = n),
+                                                   n = sum(n)), by = .(interval, segment_id)]
 data_interval_all[, velocidade := round(velocidade, 1)]
 setorder(data_interval_all, interval)
 

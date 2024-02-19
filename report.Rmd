@@ -208,7 +208,7 @@ highchart() %>%
 ```
 </div>
 
-## Velocidade media durante o mes
+## Velocidade média durante o mes
 
 <div style="box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px">
 
@@ -217,8 +217,8 @@ highchart() %>%
 highchart() %>%
   
   hc_add_series(data = params$data_month,
-                hcaes(x = month, y = round(velocidade, 1)),
-                type = "line",
+                hcaes(x = mes, y = round(velocidade, 1)),
+                type = "area",
                 color = "#F7B93B",
                 # lineWidth = 5,
                 # opacity = 0.5,

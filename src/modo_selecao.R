@@ -181,7 +181,7 @@ observeEvent(c(input$submit_selection), {
   # print(data_ok)
   
   info$segment_id <- data_ok$segment_id
-  info$speed <- mean(data_ok$velocidade)
+  info$speed <- weighted.mean(data_ok$velocidade, w = data_ok$n)
   
   # extracts stop from segments
   stops_segments <- unlist(strsplit(data_ok$segment_id, "\\-"))
@@ -205,11 +205,10 @@ observeEvent(c(input$submit_selection), {
   
   
   # by interval
-  data$interval <- segments_variables[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("interval")]
+  data$interval <- segments_variables[segment_id %in% element$selected, .(velocidade = weighted.mean(velocidade, n)), by = c("interval")]
   
   # by month
-  data$month <- segments_variables[, month := "2023-03"]
-  data$month <- data$month[segment_id %in% element$selected, .(velocidade = mean(velocidade)), by = c("month")]
+  data$month <- segments_variables[segment_id %in% element$selected, .(velocidade = weighted.mean(velocidade, n)), by = c("mes")]
   
   
   # } else {
@@ -377,8 +376,8 @@ output$output_graph_month_segments <- renderHighchart({
   highchart() %>%
     
     hc_add_series(data = data$month,
-                  hcaes(x = month, y = round(velocidade, 1)),
-                  type = "line",
+                  hcaes(x = mes, y = round(velocidade, 1)),
+                  type = "area",
                   color = "#F7B93B",
                   # lineWidth = 5,
                   # opacity = 0.5,

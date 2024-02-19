@@ -2,19 +2,18 @@ library(dplyr)
 library(data.table)
 
 segments_variables <- setDT(readRDS("data/gps_by_segment_variables.rds"))
-segments_variables[, month := "2023-03"]
 
 
 
 # graph #1: by month --------------------------------------------------------------------------
 
-data_month_all <- segments_variables[, .(velocidade = median(velocidade)), by = month]
+data_month_all <- segments_variables[, .(velocidade = weighted.mean(velocidade, n)), by = mes]
 data_month_all[, velocidade := round(velocidade, 1)]
-setorder(data_month_all, month)
+setorder(data_month_all, mes)
 
 # to filter
-data_month <- segments_variables[, .(velocidade = median(velocidade)), 
-                                 by = .(month, route_id, interval)]
+data_month <- segments_variables[, .(velocidade = weighted.mean(velocidade, n)), 
+                                 by = .(mes, route_id, interval)]
 data_month[, velocidade := round(velocidade, 1)]
 
 # save
@@ -26,12 +25,12 @@ readr::write_rds(data_month, "data/graphs/graphs_month.rds")
 # graph #2: by interval -----------------------------------------------------------------------
 
 
-data_interval_all <- segments_variables[, .(velocidade = median(velocidade)), by = interval]
+data_interval_all <- segments_variables[, .(velocidade = weighted.mean(velocidade, n)), by = interval]
 data_interval_all[, velocidade := round(velocidade, 1)]
 setorder(data_interval_all, interval)
 
 # to filter
-data_interval <- segments_variables[, .(velocidade = median(velocidade)), 
+data_interval <- segments_variables[, .(velocidade = weighted.mean(velocidade, n)), 
                                  by = .(interval, route_id)]
 data_interval[, velocidade := round(velocidade, 1)]
 

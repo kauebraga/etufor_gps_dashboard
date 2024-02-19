@@ -127,7 +127,7 @@ server <- function(input, output, session) {
     stops <- if (is.null(input$route)) stops_unique else if (input$direction == "all") subset(stops_routes, route_id %in% input$route) else subset(stops_routes, route_id %in% input$route & direction %in% input$direction)
     # # NEW CODE finishds Here
     
-    segments_data <- segments_data[, .(velocidade = mean(velocidade)), by = segment_id]
+    segments_data <- segments_data[, .(velocidade = weighted.mean(velocidade, n)), by = segment_id]
     segments_data <- merge(segments_data, segments_sf)
     segments_data <- sf::st_sf(segments_data, crs = 4326)
     
