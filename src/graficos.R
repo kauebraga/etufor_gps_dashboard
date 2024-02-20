@@ -10,8 +10,8 @@ output$output_graph_month <- renderHighchart({
   highchart() %>%
     
     hc_add_series(data = data_month_all,
-                  hcaes(x = month, y = velocidade),
-                  type = "line",
+                  hcaes(x = mes, y = velocidade),
+                  type = "area",
                   color = "#F7B93B",
                   # lineWidth = 5,
                   # opacity = 0.5,
@@ -20,7 +20,7 @@ output$output_graph_month <- renderHighchart({
                                  valueDecimals = 1)
     ) %>%
     
-    hc_title(text = "Velocidade media por mes") %>%
+    # hc_title(text = "Velocidade media por mes") %>%
     
     # hc_legend(verticalAlign = "top") %>%
     hc_yAxis(title = list(text = "Velocidade (km/h)", style = list(fontSize = 16)),
@@ -101,7 +101,7 @@ output$output_graph_fluxo <- renderHighchart({
     
     hc_add_series(data = data_fluxo_all,
                   hcaes(x = fluxo_horario, y = velocidade),
-                  type = "line",
+                  type = "area",
                   color = "#F7B93B",
                   # lineWidth = 5,
                   # opacity = 0.5,
@@ -216,7 +216,7 @@ observeEvent(c(input$route1), {
   # print(tail(ordered_colnames(), 1))
   
   data1 <- data_interval[route_id == tail(ordered_colnames_route(), 1)]
-  data1 <- data1[, .(velocidade = round(median(velocidade), 1)), by = .(route_id, interval)]
+  data1 <- data1[, .(velocidade = round(mean(velocidade), 1)), by = .(route_id, interval)]
   setorder(data1, route_id, interval)
   
   
@@ -224,7 +224,7 @@ observeEvent(c(input$route1), {
     # hcpxy_remove_series(id = "que") %>%
     hcpxy_add_series(data = data1, hcaes(x = interval, y = velocidade),
                      id = tail(ordered_colnames_route(), 1),
-                     type = "line",
+                     type = "area",
                      color = "red",
                      name = tail(ordered_colnames_route(), 1),
                      tooltip = list(pointFormat = sprintf("{series.name}: {point.y} km/h"),
@@ -234,14 +234,14 @@ observeEvent(c(input$route1), {
   
   
   data2 <- data_month[route_id == tail(ordered_colnames_route(), 1)]
-  data2 <- data2[, .(velocidade = round(median(velocidade), 1)), by = .(month)]
-  setorder(data2, month)
+  data2 <- data2[, .(velocidade = round(mean(velocidade), 1)), by = .(mes)]
+  setorder(data2, mes)
   
   print(data1)
   
   highchartProxy("output_graph_month") %>%
     # hcpxy_remove_series(id = "que") %>%
-    hcpxy_add_series(data = data2, hcaes(x = month, y = velocidade),
+    hcpxy_add_series(data = data2, hcaes(x = mes, y = velocidade),
                      id = tail(ordered_colnames_route(), 1),
                      type = "line",
                      color = "red",
@@ -265,13 +265,13 @@ observeEvent(c(input$interval1), {
   
   data1 <- data_month[interval == tail(ordered_colnames_interval(), 1)]
   
-  data1 <- data1[, .(velocidade = round(median(velocidade), 1)), by = .(month)]
-  setorder(data1, month)
+  data1 <- data1[, .(velocidade = round(mean(velocidade), 1)), by = .(mes)]
+  setorder(data1, mes)
   
   
   highchartProxy("output_graph_month") %>%
     # hcpxy_remove_series(id = "que") %>%
-    hcpxy_add_series(data = data1, hcaes(x = month, y = velocidade),
+    hcpxy_add_series(data = data1, hcaes(x = mes, y = velocidade),
                      id = tail(ordered_colnames_interval(), 1),
                      type = "line",
                      color = "red",

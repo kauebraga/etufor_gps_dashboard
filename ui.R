@@ -94,7 +94,7 @@ page_navbar(
                   numericInput(inputId = "velocidade_maxima", 
                                label = h3("Velocidades"), 
                                
-                               value = 40,
+                               value = 60,
                                max = 60,
                                min = 0
                   ),
@@ -301,7 +301,7 @@ page_navbar(
                        img(src = "img/velocidade_media_mes_graph.png", height = "30", width = "30", span("Velocidade média por mês", style = "font-family: Encode Sans;font-size: 24px;font-weight: 600;line-height: 30px;letter-spacing: 0em;text-align: left;")),
                        div(
                          style = "box-shadow: 0px 4px 4px 0px #00000040; border-radius: 10px; padding: 10px",
-                         highchartOutput("output_graph_month", height = "300px")
+                         highchartOutput("output_graph_month", height = "200px")
                        ))
       )
       

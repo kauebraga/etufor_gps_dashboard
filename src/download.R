@@ -15,7 +15,7 @@ output$download_png1 <- downloadHandler(
   },
   content = function(file) {
     
-    if (input$submit == 0) {
+    # if (input$submit == 0) {
       
       
       # print(map$m)
@@ -25,13 +25,13 @@ output$download_png1 <- downloadHandler(
       
       # sf::st_write(data$start, file)
       
-    } else {
-      
-      
-      # sf::st_write(data$segments, file)
-      mapview::mapshot(map$map, file = file)
-      
-    }
+    # } else {
+    #   
+    #   
+    #   # sf::st_write(data$segments, file)
+    #   mapview::mapshot(map$map, file = file)
+    #   
+    # }
     
   }
   
@@ -55,7 +55,7 @@ output$download_html1 <- downloadHandler(
   content = function(file) {
     
     
-    if (input$submit == 0) {
+    # if (input$submit == 0) {
       
       
       # print(map$m)
@@ -65,17 +65,17 @@ output$download_html1 <- downloadHandler(
       
       # sf::st_write(data$start, file)
       
-    } else if (input$submit >= 1) {
-      
-      print("aqui")
-      
-      # sf::st_write(data$segments, file)
-      # mapview::mapshot(input[["map"]], file, cliprect = "viewport")
-      # htmlwidgets::saveWidget(input[["map"]], file)
-      htmlwidgets::saveWidget(input[["map"]], "temp.html", selfcontained = FALSE)
-      webshot::webshot("temp.html", file = file, cliprect = "viewport")
-      
-    }
+    # } else if (input$submit >= 1) {
+    #   
+    #   print("aqui")
+    #   
+    #   # sf::st_write(data$segments, file)
+    #   # mapview::mapshot(input[["map"]], file, cliprect = "viewport")
+    #   # htmlwidgets::saveWidget(input[["map"]], file)
+    #   htmlwidgets::saveWidget(input[["map"]], "temp.html", selfcontained = FALSE)
+    #   webshot::webshot("temp.html", file = file, cliprect = "viewport")
+    #   
+    # }
     
   }
   
