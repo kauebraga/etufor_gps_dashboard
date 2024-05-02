@@ -82,13 +82,14 @@ page_navbar(
                   ),
                   # selecionar sentido
                   div(class = "filter_intervalo",
-                      awesomeCheckboxGroup(inputId = "direction",
-                                           label = h3("Sentido"),
-                                           choices = c("Ida/Volta" = "all", "Ida" = "I", "Volta" = "V"),
-                                           inline = TRUE
-                                           # disabled = TRUE
-                                           
-                                           
+                      awesomeRadio(inputId = "direction",
+                                   label = h3("Sentido"),
+                                   selected = "all",
+                                   choices = c("Ida/Volta" = "all", "Ida" = "I", "Volta" = "V"),
+                                   inline = TRUE
+                                   # disabled = TRUE
+                                   
+                                   
                       )),
                   
                   numericInput(inputId = "velocidade_maxima", 

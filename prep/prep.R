@@ -5,7 +5,9 @@ library(data.table)
 # full data -----------------------------------------------------------------------------------
 segments_variables <- readRDS("data/gps_by_segment_variables.rds")
 # extrair sentido
-segments_variables <- segments_variables %>% mutate(direction = stringr::str_sub(shape_id, -1, -1)) 
+segments_variables <- segments_variables %>% 
+  filter(velocidade <= 40) %>%
+  mutate(direction = stringr::str_sub(shape_id, -1, -1)) 
 # save
 readr::write_rds(segments_variables, "data/gps_by_segment_variables.rds")
 
