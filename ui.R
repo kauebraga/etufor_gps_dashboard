@@ -2,7 +2,7 @@
 routes_shapes_list <- readRDS("data/routes_shapes_list.rds")
 intervals_list <- readRDS("data/intervals.rds")
 
-
+ui <- 
 page_navbar(
   tags$head(includeCSS("www/dropdown.css")),
   tags$head(includeCSS("www/sidebar.css")),
@@ -311,3 +311,7 @@ page_navbar(
   nav_spacer(),
   nav_item(img(src = "img/etufor.png", height = "50", style = "float: right")),
 )
+
+
+# Wrap your UI with secure_app
+ui <- secure_app(ui)
