@@ -3,7 +3,8 @@ intervals_list <- readRDS("data/intervals.rds")
 # open data
 segments_sf <- setDT(readRDS("data/segments_gtfs_unique.rds"))
 segments_speeds <- setDT(readRDS("data/gps_by_segment_unique.rds"))
-segments_variables <- setDT(readRDS("data/gps_by_segment_variables.rds"))
+# segments_variables <- setDT(readRDS("data/gps_by_segment_variables.rds"))
+segments_variables <- as.data.table(arrow::read_parquet("data/gps_by_segment_variables.parquet"))
 stops_routes <- readRDS("data/stops_gtfs_routes_sf.rds")
 stops_unique <- readRDS("data/stops_gtfs_sf.rds")
 
