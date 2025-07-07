@@ -19,7 +19,7 @@ readr::write_rds(streets_polygons, "data-raw/fortaleza_streets.rds")
 # abrir trechos -------------------------------------------------------------------------------
 
 # extrair do gtfs
-gtfs <- read_gtfs("data-raw/gtfs_20230519_mod.zip")
+gtfs <- read_gtfs("../pasfor/data/gtfs_202503_mod.zip")
 
 # extrair trechos
 gtfs_trechos_possiveis <- kauetools::extract_scheduled_stops(gtfs)

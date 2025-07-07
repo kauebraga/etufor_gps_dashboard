@@ -3,7 +3,7 @@
 library(gtfstools)
 library(dplyr)
 
-gtfs <- read_gtfs("data-raw/gtfs_20230519_mod.zip")
+gtfs <- read_gtfs("../pasfor/data/gtfs_202503_mod.zip")
 
 
 routes_id <- gtfs$trips %>% 

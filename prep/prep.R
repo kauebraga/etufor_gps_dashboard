@@ -42,7 +42,7 @@ ui$stops$stop_name
 
 # segments ------------------------------------------------------------------------------------
 
-segments <- readRDS("data/segments_gtfs_unique.rds") %>% st_transform(4326)
+segments <- readRDS("data/segments_gtfs_unique.rds") %>% sf::st_transform(4326)
 
 
 
